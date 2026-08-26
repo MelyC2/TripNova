@@ -46,10 +46,6 @@ export default function DestinosPage() {
         cargarDatos()
     }, [])
 
-    /* =========================
-       CARGAR DATOS
-    ========================= */
-
     const cargarDatos = async () => {
 
         const {
@@ -87,9 +83,6 @@ export default function DestinosPage() {
         await cargarFavoritos()
     }
 
-    /* =========================
-       CARGAR DESTINOS
-    ========================= */
 
     const cargarDestinos = async () => {
 
@@ -116,9 +109,6 @@ export default function DestinosPage() {
         setDestinos(data || [])
     }
 
-    /* =========================
-       CARGAR FAVORITOS
-    ========================= */
 
     const cargarFavoritos = async () => {
 
@@ -153,10 +143,6 @@ export default function DestinosPage() {
             ) || []
         )
     }
-
-    /* =========================
-       AGREGAR FAVORITO
-    ========================= */
 
     const agregarFavorito = async (
         destinoId: string
@@ -194,10 +180,6 @@ export default function DestinosPage() {
         )
     }
 
-    /* =========================
-       ELIMINAR FAVORITO
-    ========================= */
-
     const eliminarFavorito = async (
         destinoId: string
     ) => {
@@ -231,10 +213,6 @@ export default function DestinosPage() {
         )
     }
 
-    /* =========================
-       CAMBIAR FAVORITO
-    ========================= */
-
     const cambiarFavorito = async (
         destinoId: string
     ) => {
@@ -246,9 +224,6 @@ export default function DestinosPage() {
         }
     }
 
-    /* =========================
-       CREAR DESTINO
-    ========================= */
 
     const handleCrearDestino = async () => {
 
@@ -298,10 +273,6 @@ export default function DestinosPage() {
         await cargarDestinos()
     }
 
-    /* =========================
-       PREPARAR EDICIÓN
-    ========================= */
-
     const prepararEdicion = (
         destino: Destino
     ) => {
@@ -331,10 +302,6 @@ export default function DestinosPage() {
             destino.ciudad || ""
         )
     }
-
-    /* =========================
-       ACTUALIZAR DESTINO
-    ========================= */
 
     const actualizarDestino = async () => {
 
@@ -391,10 +358,6 @@ export default function DestinosPage() {
         await cargarDestinos()
     }
 
-    /* =========================
-       ELIMINAR DESTINO
-    ========================= */
-
     const eliminarDestino = async (
         id: string
     ) => {
@@ -422,10 +385,6 @@ export default function DestinosPage() {
         await cargarDestinos()
     }
 
-    /* =========================
-       LIMPIAR FORMULARIO
-    ========================= */
-
     const limpiarFormulario = () => {
 
         setNombre("")
@@ -436,9 +395,6 @@ export default function DestinosPage() {
         setDestinoEditando(null)
     }
 
-    /* =========================
-       FILTRAR DESTINOS
-    ========================= */
 
     const destinosFiltrados =
         destinos.filter((destino) => {
@@ -469,10 +425,6 @@ export default function DestinosPage() {
 
             <div className="w-full max-w-4xl mx-auto">
 
-                {/* =========================
-                    ENCABEZADO
-                ========================= */}
-
                 <div className="mb-10">
 
                     <h1 className="text-3xl font-bold text-white mb-2">
@@ -492,18 +444,14 @@ export default function DestinosPage() {
 
                 </div>
 
-                {/* =========================
-                    SEARCH BAR
-                ========================= */}
+                {/* ------------SEARCH BAR-----------------*/}
 
                 <SearchBar
                     query={busqueda}
                     onQueryChange={setBusqueda}
                 />
 
-                {/* =========================
-                    FORMULARIO ORGANIZADOR
-                ========================= */}
+                {/* -------------FORMULARIO ORGANIZADOR-----------*/}
 
                 {rol === "organizador" && (
 
@@ -600,9 +548,7 @@ export default function DestinosPage() {
 
                 )}
 
-                {/* =========================
-                    LISTA DE DESTINOS
-                ========================= */}
+                {/* ----------------LISTA DE DESTINOS------- */}
 
                 <div>
 
