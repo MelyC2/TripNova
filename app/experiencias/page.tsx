@@ -4,6 +4,12 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 
+import {
+    crearExperiencia as crearExperienciaAction,
+    actualizarExperiencia as actualizarExperienciaAction,
+    eliminarExperiencia as eliminarExperienciaAction
+} from "@/actions/experiencias"
+
 type Experiencia = {
     id: string
     titulo: string
@@ -14,7 +20,8 @@ type Experiencia = {
 
 export default function ExperienciasPage() {
 
-    const [experiencias, setExperiencias] = useState<Experiencia[]>([])
+    const [experiencias, setExperiencias] =
+        useState<Experiencia[]>([])
 
     const [titulo, setTitulo] = useState("")
     const [descripcion, setDescripcion] = useState("")
@@ -30,6 +37,10 @@ export default function ExperienciasPage() {
         cargarExperiencias()
     }, [])
 
+    /* =========================
+       CARGAR EXPERIENCIAS
+    ========================= */
+
     const cargarExperiencias = async () => {
 
         const {
@@ -41,11 +52,16 @@ export default function ExperienciasPage() {
             return
         }
 
-        const { data, error } = await supabase
+        const {
+            data,
+            error
+        } = await supabase
             .from("experiencias")
             .select("*")
             .eq("user_id", user.id)
-            .order("fecha", { ascending: false })
+            .order("fecha", {
+                ascending: false
+            })
 
         if (error) {
             alert(error.message)
@@ -55,44 +71,69 @@ export default function ExperienciasPage() {
         setExperiencias(data || [])
     }
 
+    /* =========================
+       CREAR EXPERIENCIA
+       SERVER ACTION
+    ========================= */
+
     const crearExperiencia = async () => {
 
         if (!titulo.trim()) {
-            alert("Escribe un título para la experiencia")
+            alert(
+                "Escribe un título para la experiencia"
+            )
             return
         }
 
-        const {
-            data: { user }
-        } = await supabase.auth.getUser()
+        const formData = new FormData()
 
-        if (!user) {
-            router.push("/login")
+        formData.append(
+            "titulo",
+            titulo
+        )
+
+        formData.append(
+            "descripcion",
+            descripcion
+        )
+
+        formData.append(
+            "destino",
+            destino
+        )
+
+        formData.append(
+            "fecha",
+            fecha
+        )
+
+        const resultado =
+            await crearExperienciaAction(
+                formData
+            )
+
+        if (resultado.error) {
+            alert(resultado.error)
             return
         }
 
-        const { error } = await supabase
-            .from("experiencias")
-            .insert({
-                user_id: user.id,
-                titulo: titulo,
-                descripcion: descripcion,
-                destino: destino,
-                fecha: fecha || null,
-            })
-
-        if (error) {
-            alert(error.message)
-            return
-        }
-
-        alert("Experiencia creada correctamente")
+        alert(
+            "Experiencia creada correctamente"
+        )
 
         limpiarFormulario()
-        cargarExperiencias()
+
+        await cargarExperiencias()
     }
 
-    const eliminarExperiencia = async (id: string) => {
+    /* =========================
+       ELIMINAR EXPERIENCIA
+       SERVER ACTION
+    ========================= */
+
+    const eliminarExperiencia = async (
+        id: string
+    ) => {
 
         const confirmar = confirm(
             "¿Seguro que deseas eliminar esta experiencia?"
@@ -102,30 +143,56 @@ export default function ExperienciasPage() {
             return
         }
 
-        const { error } = await supabase
-            .from("experiencias")
-            .delete()
-            .eq("id", id)
+        const resultado =
+            await eliminarExperienciaAction(
+                id
+            )
 
-        if (error) {
-            alert(error.message)
+        if (resultado.error) {
+            alert(resultado.error)
             return
         }
 
-        alert("Experiencia eliminada correctamente")
+        alert(
+            "Experiencia eliminada correctamente"
+        )
 
-        cargarExperiencias()
+        await cargarExperiencias()
     }
 
-    const prepararEdicion = (experiencia: Experiencia) => {
+    /* =========================
+       PREPARAR EDICIÓN
+    ========================= */
 
-        setExperienciaEditando(experiencia)
+    const prepararEdicion = (
+        experiencia: Experiencia
+    ) => {
 
-        setTitulo(experiencia.titulo)
-        setDescripcion(experiencia.descripcion || "")
-        setDestino(experiencia.destino || "")
-        setFecha(experiencia.fecha || "")
+        setExperienciaEditando(
+            experiencia
+        )
+
+        setTitulo(
+            experiencia.titulo
+        )
+
+        setDescripcion(
+            experiencia.descripcion || ""
+        )
+
+        setDestino(
+            experiencia.destino || ""
+        )
+
+        setFecha(
+            experiencia.fecha || ""
+        )
     }
+
+    /* =========================
+       ACTUALIZAR EXPERIENCIA
+       SERVER ACTION
+    ========================= */
 
     const actualizarExperiencia = async () => {
 
@@ -133,26 +200,58 @@ export default function ExperienciasPage() {
             return
         }
 
-        const { error } = await supabase
-            .from("experiencias")
-            .update({
-                titulo: titulo,
-                descripcion: descripcion,
-                destino: destino,
-                fecha: fecha || null,
-            })
-            .eq("id", experienciaEditando.id)
-
-        if (error) {
-            alert(error.message)
+        if (!titulo.trim()) {
+            alert(
+                "Escribe un título para la experiencia"
+            )
             return
         }
 
-        alert("Experiencia actualizada correctamente")
+        const formData = new FormData()
+
+        formData.append(
+            "titulo",
+            titulo
+        )
+
+        formData.append(
+            "descripcion",
+            descripcion
+        )
+
+        formData.append(
+            "destino",
+            destino
+        )
+
+        formData.append(
+            "fecha",
+            fecha
+        )
+
+        const resultado =
+            await actualizarExperienciaAction(
+                experienciaEditando.id,
+                formData
+            )
+
+        if (resultado.error) {
+            alert(resultado.error)
+            return
+        }
+
+        alert(
+            "Experiencia actualizada correctamente"
+        )
 
         limpiarFormulario()
-        cargarExperiencias()
+
+        await cargarExperiencias()
     }
+
+    /* =========================
+       LIMPIAR FORMULARIO
+    ========================= */
 
     const limpiarFormulario = () => {
 
@@ -165,14 +264,21 @@ export default function ExperienciasPage() {
     }
 
     return (
+
         <section className="max-w-4xl mx-auto px-6 py-12">
 
-            {/* Encabezado */}
+            {/* ENCABEZADO */}
 
             <div className="mb-10">
 
                 <h1 className="text-3xl font-bold text-white mb-2">
-                    Mis <span className="text-blue-400">experiencias</span>
+
+                    Mis{" "}
+
+                    <span className="text-blue-400">
+                        experiencias
+                    </span>
+
                 </h1>
 
                 <p className="text-slate-400">
@@ -181,8 +287,7 @@ export default function ExperienciasPage() {
 
             </div>
 
-
-            {/* Formulario */}
+            {/* FORMULARIO */}
 
             <div className="bg-slate-800 rounded-xl p-6">
 
@@ -200,7 +305,11 @@ export default function ExperienciasPage() {
                         type="text"
                         placeholder="Título de la experiencia"
                         value={titulo}
-                        onChange={(e) => setTitulo(e.target.value)}
+                        onChange={(e) =>
+                            setTitulo(
+                                e.target.value
+                            )
+                        }
                         className="bg-slate-700 text-white rounded-lg px-4 py-3 border border-slate-600 focus:outline-none focus:border-blue-500"
                     />
 
@@ -208,21 +317,33 @@ export default function ExperienciasPage() {
                         type="text"
                         placeholder="Destino"
                         value={destino}
-                        onChange={(e) => setDestino(e.target.value)}
+                        onChange={(e) =>
+                            setDestino(
+                                e.target.value
+                            )
+                        }
                         className="bg-slate-700 text-white rounded-lg px-4 py-3 border border-slate-600 focus:outline-none focus:border-blue-500"
                     />
 
                     <input
                         type="date"
                         value={fecha}
-                        onChange={(e) => setFecha(e.target.value)}
+                        onChange={(e) =>
+                            setFecha(
+                                e.target.value
+                            )
+                        }
                         className="bg-slate-700 text-white rounded-lg px-4 py-3 border border-slate-600 focus:outline-none focus:border-blue-500"
                     />
 
                     <textarea
                         placeholder="Descripción de la experiencia"
                         value={descripcion}
-                        onChange={(e) => setDescripcion(e.target.value)}
+                        onChange={(e) =>
+                            setDescripcion(
+                                e.target.value
+                            )
+                        }
                         className="bg-slate-700 text-white rounded-lg px-4 py-3 border border-slate-600 focus:outline-none focus:border-blue-500"
                     />
 
@@ -241,11 +362,12 @@ export default function ExperienciasPage() {
 
                     </button>
 
-
                     {experienciaEditando && (
 
                         <button
-                            onClick={limpiarFormulario}
+                            onClick={
+                                limpiarFormulario
+                            }
                             className="bg-slate-700 hover:bg-slate-600 text-white font-semibold py-3 rounded-lg transition-colors"
                         >
                             Cancelar
@@ -257,8 +379,7 @@ export default function ExperienciasPage() {
 
             </div>
 
-
-            {/* Experiencias registradas */}
+            {/* EXPERIENCIAS REGISTRADAS */}
 
             <div className="mt-10">
 
@@ -268,72 +389,72 @@ export default function ExperienciasPage() {
 
                 <div className="flex flex-col gap-4">
 
-                    {experiencias.map((experiencia) => (
+                    {experiencias.map(
+                        (experiencia) => (
 
-                        <div
-                            key={experiencia.id}
-                            className="bg-slate-800 rounded-xl p-6"
-                        >
+                            <div
+                                key={experiencia.id}
+                                className="bg-slate-800 rounded-xl p-6"
+                            >
 
-                            <h3 className="text-xl font-bold text-white mb-2">
-                                {experiencia.titulo}
-                            </h3>
+                                <h3 className="text-xl font-bold text-white mb-2">
+                                    {experiencia.titulo}
+                                </h3>
 
+                                {experiencia.destino && (
 
-                            {experiencia.destino && (
+                                    <p className="text-blue-400 mb-2">
+                                        📍 {experiencia.destino}
+                                    </p>
 
-                                <p className="text-blue-400 mb-2">
-                                    📍 {experiencia.destino}
-                                </p>
+                                )}
 
-                            )}
+                                {experiencia.fecha && (
 
+                                    <p className="text-slate-400 mb-2">
+                                        📅 {experiencia.fecha}
+                                    </p>
 
-                            {experiencia.fecha && (
+                                )}
 
-                                <p className="text-slate-400 mb-2">
-                                    📅 {experiencia.fecha}
-                                </p>
+                                {experiencia.descripcion && (
 
-                            )}
+                                    <p className="text-slate-400 mb-4">
+                                        {experiencia.descripcion}
+                                    </p>
 
+                                )}
 
-                            {experiencia.descripcion && (
+                                <div className="flex gap-3">
 
-                                <p className="text-slate-400 mb-4">
-                                    {experiencia.descripcion}
-                                </p>
+                                    <button
+                                        onClick={() =>
+                                            prepararEdicion(
+                                                experiencia
+                                            )
+                                        }
+                                        className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg transition-colors"
+                                    >
+                                        Editar
+                                    </button>
 
-                            )}
+                                    <button
+                                        onClick={() =>
+                                            eliminarExperiencia(
+                                                experiencia.id
+                                            )
+                                        }
+                                        className="bg-slate-700 hover:bg-slate-600 text-white font-semibold px-4 py-2 rounded-lg transition-colors"
+                                    >
+                                        Eliminar
+                                    </button>
 
-
-                            <div className="flex gap-3">
-
-                                <button
-                                    onClick={() =>
-                                        prepararEdicion(experiencia)
-                                    }
-                                    className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg transition-colors"
-                                >
-                                    Editar
-                                </button>
-
-
-                                <button
-                                    onClick={() =>
-                                        eliminarExperiencia(experiencia.id)
-                                    }
-                                    className="bg-slate-700 hover:bg-slate-600 text-white font-semibold px-4 py-2 rounded-lg transition-colors"
-                                >
-                                    Eliminar
-                                </button>
+                                </div>
 
                             </div>
 
-                        </div>
-
-                    ))}
-
+                        )
+                    )}
 
                     {experiencias.length === 0 && (
 
