@@ -26,14 +26,31 @@ export async function middleware(request: NextRequest) {
         data: { user },
     } = await supabase.auth.getUser()
 
-    // Proteger /dashboard: sin sesión, redirige a /login
-    if (!user && request.nextUrl.pathname.startsWith("/dashboard")) {
-        return NextResponse.redirect(new URL("/login", request.url))
+    // Rutas privadas
+    const rutasPrivadas = [
+        "/dashboard",
+        "/mis-viajes",
+        "/favoritos",
+    ]
+
+    const esRutaPrivada = rutasPrivadas.some(
+        (ruta) => request.nextUrl.pathname.startsWith(ruta)
+    )
+
+    // Si no hay sesión, redirigir al login
+    if (!user && esRutaPrivada) {
+        return NextResponse.redirect(
+            new URL("/login", request.url)
+        )
     }
 
     return response
 }
 
 export const config = {
-    matcher: ["/dashboard/:path*"],
+    matcher: [
+        "/dashboard/:path*",
+        "/mis-viajes/:path*",
+        "/favoritos/:path*",
+    ],
 }
