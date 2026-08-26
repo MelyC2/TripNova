@@ -4,6 +4,10 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 
+import {
+    eliminarFavorito as eliminarFavoritoAction
+} from "@/actions/favoritos"
+
 type Destino = {
     id: string
     nombre: string
@@ -28,10 +32,14 @@ export default function FavoritosPage() {
         cargarFavoritos()
     }, [])
 
+    /* =========================
+       CARGAR FAVORITOS
+    ========================= */
+
     const cargarFavoritos = async () => {
 
         const {
-            data: { user },
+            data: { user }
         } = await supabase.auth.getUser()
 
         if (!user) {
@@ -39,65 +47,103 @@ export default function FavoritosPage() {
             return
         }
 
-        const { data: favoritosData, error: favoritosError } =
-            await supabase
-                .from("favoritos")
-                .select("id, destino_id")
-                .eq("user_id", user.id)
+        const {
+            data: favoritosData,
+            error: favoritosError
+        } = await supabase
+            .from("favoritos")
+            .select("id, destino_id")
+            .eq("user_id", user.id)
 
         if (favoritosError) {
+
             console.error(
                 "Error cargando favoritos:",
                 favoritosError
             )
+
+            alert(favoritosError.message)
+
             return
         }
 
-        if (!favoritosData || favoritosData.length === 0) {
+        if (
+            !favoritosData ||
+            favoritosData.length === 0
+        ) {
+
             setFavoritos([])
+
             return
         }
 
-        const destinoIds = favoritosData.map(
-            (favorito) => favorito.destino_id
-        )
+        const destinoIds =
+            favoritosData.map(
+                (favorito) =>
+                    favorito.destino_id
+            )
 
-        const { data: destinosData, error: destinosError } =
-            await supabase
-                .from("destinos")
-                .select("id, nombre, descripcion, pais, ciudad")
-                .in("id", destinoIds)
+        const {
+            data: destinosData,
+            error: destinosError
+        } = await supabase
+            .from("destinos")
+            .select(
+                "id, nombre, descripcion, pais, ciudad"
+            )
+            .in("id", destinoIds)
 
         if (destinosError) {
+
             console.error(
                 "Error cargando destinos:",
                 destinosError
             )
+
+            alert(destinosError.message)
+
             return
         }
 
         const favoritosCompletos: Favorito[] = []
 
-        favoritosData.forEach((favorito) => {
+        favoritosData.forEach(
+            (favorito) => {
 
-            const destino = destinosData?.find(
-                (destino) =>
-                    destino.id === favorito.destino_id
-            )
+                const destino =
+                    destinosData?.find(
+                        (destino) =>
+                            destino.id ===
+                            favorito.destino_id
+                    )
 
-            if (destino) {
-                favoritosCompletos.push({
-                    id: favorito.id,
-                    destino_id: favorito.destino_id,
-                    destino: destino,
-                })
+                if (destino) {
+
+                    favoritosCompletos.push({
+                        id: favorito.id,
+                        destino_id:
+                            favorito.destino_id,
+                        destino: destino
+                    })
+
+                }
+
             }
-        })
+        )
 
-        setFavoritos(favoritosCompletos)
+        setFavoritos(
+            favoritosCompletos
+        )
     }
 
-    const eliminarFavorito = async (id: string) => {
+    /* =========================
+       ELIMINAR FAVORITO
+       SERVER ACTION
+    ========================= */
+
+    const eliminarFavorito = async (
+        destinoId: string
+    ) => {
 
         const confirmar = confirm(
             "¿Seguro que deseas eliminar este destino de favoritos?"
@@ -107,35 +153,45 @@ export default function FavoritosPage() {
             return
         }
 
-        const { error } = await supabase
-            .from("favoritos")
-            .delete()
-            .eq("id", id)
+        const resultado =
+            await eliminarFavoritoAction(
+                destinoId
+            )
 
-        if (error) {
-            alert(error.message)
+        if (resultado.error) {
+
+            alert(
+                resultado.error
+            )
+
             return
         }
 
-        alert("Destino eliminado de favoritos")
+        alert(
+            "Destino eliminado de favoritos"
+        )
 
-        cargarFavoritos()
+        await cargarFavoritos()
     }
 
     return (
+
         <section className="min-h-screen px-4 py-12">
 
             <div className="w-full max-w-4xl mx-auto">
 
-                {/* Encabezado */}
+                {/* ENCABEZADO */}
 
                 <div className="mb-10">
 
                     <h1 className="text-3xl font-bold text-white mb-2">
+
                         Mis{" "}
+
                         <span className="text-blue-400">
                             Favoritos
                         </span>
+
                     </h1>
 
                     <p className="text-slate-400">
@@ -144,8 +200,7 @@ export default function FavoritosPage() {
 
                 </div>
 
-
-                {/* Favoritos */}
+                {/* FAVORITOS */}
 
                 <div>
 
@@ -165,53 +220,66 @@ export default function FavoritosPage() {
 
                     )}
 
-
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-                        {favoritos.map((favorito) => (
+                        {favoritos.map(
+                            (favorito) => (
 
-                            <div
-                                key={favorito.id}
-                                className="bg-slate-800 rounded-xl p-6"
-                            >
+                                <div
+                                    key={favorito.id}
+                                    className="bg-slate-800 rounded-xl p-6"
+                                >
 
-                                <h3 className="text-xl font-bold text-white mb-2">
-                                    {favorito.destino.nombre}
-                                </h3>
+                                    <h3 className="text-xl font-bold text-white mb-2">
 
+                                        {favorito.destino.nombre}
 
-                                {favorito.destino.ciudad &&
-                                    favorito.destino.pais && (
+                                    </h3>
 
-                                        <p className="text-blue-400 mb-3">
-                                            📍 {favorito.destino.ciudad},{" "}
-                                            {favorito.destino.pais}
+                                    {favorito.destino.ciudad &&
+                                        favorito.destino.pais && (
+
+                                            <p className="text-blue-400 mb-3">
+
+                                                📍{" "}
+
+                                                {favorito.destino.ciudad}
+                                                {", "}
+                                                {favorito.destino.pais}
+
+                                            </p>
+
+                                        )}
+
+                                    {favorito.destino.descripcion && (
+
+                                        <p className="text-slate-400 mb-5">
+
+                                            {favorito.destino.descripcion}
+
                                         </p>
 
                                     )}
 
+                                    <div className="flex gap-3">
 
-                                {favorito.destino.descripcion && (
+                                        <button
+                                            onClick={() =>
+                                                eliminarFavorito(
+                                                    favorito.destino_id
+                                                )
+                                            }
+                                            className="bg-slate-700 hover:bg-slate-600 text-white font-semibold px-4 py-2 rounded-lg transition-colors"
+                                        >
+                                            Eliminar de favoritos
+                                        </button>
 
-                                    <p className="text-slate-400 mb-5">
-                                        {favorito.destino.descripcion}
-                                    </p>
+                                    </div>
 
-                                )}
+                                </div>
 
-
-                                <button
-                                    onClick={() =>
-                                        eliminarFavorito(favorito.id)
-                                    }
-                                    className="bg-slate-700 hover:bg-slate-600 text-white font-semibold px-4 py-2 rounded-lg transition-colors"
-                                >
-                                    Eliminar de favoritos
-                                </button>
-
-                            </div>
-
-                        ))}
+                            )
+                        )}
 
                     </div>
 
