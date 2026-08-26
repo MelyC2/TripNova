@@ -3,12 +3,14 @@
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
-import Link from "next/link"
+
+import SearchBar from "@/components/SearchBar"
+import PostCard from "@/components/PostCard"
 
 import {
     crearDestino,
     actualizarDestino as actualizarDestinoAction,
-    eliminarDestino as eliminarDestinoAction
+    eliminarDestino as eliminarDestinoAction,
 } from "@/actions/destinos"
 
 type Destino = {
@@ -51,7 +53,7 @@ export default function DestinosPage() {
     const cargarDatos = async () => {
 
         const {
-            data: { user }
+            data: { user },
         } = await supabase.auth.getUser()
 
         if (!user) {
@@ -63,7 +65,7 @@ export default function DestinosPage() {
 
         const {
             data: perfil,
-            error: errorPerfil
+            error: errorPerfil,
         } = await supabase
             .from("profiles")
             .select("role")
@@ -93,12 +95,12 @@ export default function DestinosPage() {
 
         const {
             data,
-            error
+            error,
         } = await supabase
             .from("destinos")
             .select("*")
             .order("nombre", {
-                ascending: true
+                ascending: true,
             })
 
         if (error) {
@@ -115,13 +117,13 @@ export default function DestinosPage() {
     }
 
     /* =========================
-       FAVORITOS
+       CARGAR FAVORITOS
     ========================= */
 
     const cargarFavoritos = async () => {
 
         const {
-            data: { user }
+            data: { user },
         } = await supabase.auth.getUser()
 
         if (!user) {
@@ -130,7 +132,7 @@ export default function DestinosPage() {
 
         const {
             data,
-            error
+            error,
         } = await supabase
             .from("favoritos")
             .select("destino_id")
@@ -152,12 +154,16 @@ export default function DestinosPage() {
         )
     }
 
+    /* =========================
+       AGREGAR FAVORITO
+    ========================= */
+
     const agregarFavorito = async (
         destinoId: string
     ) => {
 
         const {
-            data: { user }
+            data: { user },
         } = await supabase.auth.getUser()
 
         if (!user) {
@@ -167,12 +173,12 @@ export default function DestinosPage() {
         }
 
         const {
-            error
+            error,
         } = await supabase
             .from("favoritos")
             .insert({
                 user_id: user.id,
-                destino_id: destinoId
+                destino_id: destinoId,
             })
 
         if (error) {
@@ -183,17 +189,21 @@ export default function DestinosPage() {
         setFavoritos(
             (favoritosActuales) => [
                 ...favoritosActuales,
-                destinoId
+                destinoId,
             ]
         )
     }
+
+    /* =========================
+       ELIMINAR FAVORITO
+    ========================= */
 
     const eliminarFavorito = async (
         destinoId: string
     ) => {
 
         const {
-            data: { user }
+            data: { user },
         } = await supabase.auth.getUser()
 
         if (!user) {
@@ -201,7 +211,7 @@ export default function DestinosPage() {
         }
 
         const {
-            error
+            error,
         } = await supabase
             .from("favoritos")
             .delete()
@@ -221,30 +231,23 @@ export default function DestinosPage() {
         )
     }
 
+    /* =========================
+       CAMBIAR FAVORITO
+    ========================= */
+
     const cambiarFavorito = async (
         destinoId: string
     ) => {
 
-        if (
-            favoritos.includes(destinoId)
-        ) {
-
-            await eliminarFavorito(
-                destinoId
-            )
-
+        if (favoritos.includes(destinoId)) {
+            await eliminarFavorito(destinoId)
         } else {
-
-            await agregarFavorito(
-                destinoId
-            )
-
+            await agregarFavorito(destinoId)
         }
     }
 
     /* =========================
        CREAR DESTINO
-       SERVER ACTION
     ========================= */
 
     const handleCrearDestino = async () => {
@@ -296,21 +299,17 @@ export default function DestinosPage() {
     }
 
     /* =========================
-       EDITAR DESTINO
+       PREPARAR EDICIÓN
     ========================= */
 
     const prepararEdicion = (
         destino: Destino
     ) => {
 
-        if (
-            destino.user_id !== userId
-        ) {
-
+        if (destino.user_id !== userId) {
             alert(
                 "No puedes editar este destino"
             )
-
             return
         }
 
@@ -335,12 +334,18 @@ export default function DestinosPage() {
 
     /* =========================
        ACTUALIZAR DESTINO
-       SERVER ACTION
     ========================= */
 
     const actualizarDestino = async () => {
 
         if (!destinoEditando) {
+            return
+        }
+
+        if (!nombre.trim()) {
+            alert(
+                "Escribe el nombre del destino"
+            )
             return
         }
 
@@ -388,7 +393,6 @@ export default function DestinosPage() {
 
     /* =========================
        ELIMINAR DESTINO
-       SERVER ACTION
     ========================= */
 
     const eliminarDestino = async (
@@ -433,27 +437,25 @@ export default function DestinosPage() {
     }
 
     /* =========================
-       BUSCADOR
+       FILTRAR DESTINOS
     ========================= */
 
     const destinosFiltrados =
         destinos.filter((destino) => {
 
             const texto =
-                busqueda.toLowerCase()
+                busqueda
+                    .toLowerCase()
+                    .trim()
 
             return (
                 destino.nombre
                     .toLowerCase()
-                    .includes(texto)
-
-                ||
+                    .includes(texto) ||
 
                 destino.ciudad
                     ?.toLowerCase()
-                    .includes(texto)
-
-                ||
+                    .includes(texto) ||
 
                 destino.pais
                     ?.toLowerCase()
@@ -467,7 +469,9 @@ export default function DestinosPage() {
 
             <div className="w-full max-w-4xl mx-auto">
 
-                {/* ENCABEZADO */}
+                {/* =========================
+                    ENCABEZADO
+                ========================= */}
 
                 <div className="mb-10">
 
@@ -482,34 +486,24 @@ export default function DestinosPage() {
                     </h1>
 
                     <p className="text-slate-400">
-                        Descubre lugares increíbles para tu próxima aventura.
+                        Descubre lugares increíbles
+                        para tu próxima aventura.
                     </p>
 
                 </div>
 
-                {/* BUSCADOR */}
+                {/* =========================
+                    SEARCH BAR
+                ========================= */}
 
-                <div className="bg-slate-800 rounded-xl p-6 mb-8">
+                <SearchBar
+                    query={busqueda}
+                    onQueryChange={setBusqueda}
+                />
 
-                    <h2 className="text-xl font-bold text-white mb-4">
-                        Buscar destino
-                    </h2>
-
-                    <input
-                        type="text"
-                        placeholder="Escribe un destino..."
-                        value={busqueda}
-                        onChange={(e) =>
-                            setBusqueda(
-                                e.target.value
-                            )
-                        }
-                        className="w-full bg-slate-700 text-white rounded-lg px-4 py-3 border border-slate-600 focus:outline-none focus:border-blue-500"
-                    />
-
-                </div>
-
-                {/* FORMULARIO ORGANIZADOR */}
+                {/* =========================
+                    FORMULARIO ORGANIZADOR
+                ========================= */}
 
                 {rol === "organizador" && (
 
@@ -606,7 +600,9 @@ export default function DestinosPage() {
 
                 )}
 
-                {/* LISTA DESTINOS */}
+                {/* =========================
+                    LISTA DE DESTINOS
+                ========================= */}
 
                 <div>
 
@@ -621,69 +617,46 @@ export default function DestinosPage() {
 
                                 <div
                                     key={destino.id}
-                                    className="bg-slate-800 rounded-xl p-6"
+                                    className="relative"
                                 >
 
-                                    <h3 className="text-xl font-bold text-white mb-2">
+                                    {/* POST CARD */}
 
-                                        {destino.nombre}
+                                    <PostCard
+                                        id={destino.id}
+                                        nombre={destino.nombre}
+                                        descripcion={
+                                            destino.descripcion
+                                        }
+                                        pais={destino.pais}
+                                        ciudad={destino.ciudad}
+                                    />
 
-                                    </h3>
+                                    {/* FAVORITO */}
 
-                                    {destino.ciudad &&
-                                        destino.pais && (
-
-                                            <p className="text-blue-400 mb-3">
-
-                                                📍 {destino.ciudad},{" "}
-                                                {destino.pais}
-
-                                            </p>
-
-                                        )}
-
-                                    {destino.descripcion && (
-
-                                        <p className="text-slate-400 mb-5">
-
-                                            {destino.descripcion}
-
-                                        </p>
-
-                                    )}
-
-                                    <div className="flex gap-3 flex-wrap">
-
-                                        <button
-                                            onClick={() =>
-                                                cambiarFavorito(
-                                                    destino.id
-                                                )
-                                            }
-                                            className="bg-slate-700 hover:bg-slate-600 text-white font-semibold px-4 py-2 rounded-lg transition-colors"
-                                        >
-
-                                            {favoritos.includes(
+                                    <button
+                                        onClick={() =>
+                                            cambiarFavorito(
                                                 destino.id
                                             )
-                                                ? "★ Favorito"
-                                                : "☆ Guardar favorito"}
+                                        }
+                                        className="absolute bottom-16 left-6 bg-slate-700 hover:bg-slate-600 text-white font-semibold px-4 py-2 rounded-lg transition-colors"
+                                    >
 
-                                        </button>
+                                        {favoritos.includes(
+                                            destino.id
+                                        )
+                                            ? "★ Favorito"
+                                            : "☆ Guardar favorito"}
 
-                                        <Link
-                                            href={`/destinos/${destino.id}`}
-                                            className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg transition-colors"
-                                        >
-                                            Ver detalle
-                                        </Link>
+                                    </button>
 
-                                    </div>
+                                    {/* ACCIONES ORGANIZADOR */}
 
                                     {rol === "organizador" &&
                                         destino.user_id === userId && (
 
-                                            <div className="flex gap-3 mt-4">
+                                            <div className="absolute bottom-6 left-6 flex gap-3">
 
                                                 <button
                                                     onClick={() =>
@@ -715,6 +688,8 @@ export default function DestinosPage() {
 
                             )
                         )}
+
+                        {/* SIN RESULTADOS */}
 
                         {destinosFiltrados.length === 0 && (
 
